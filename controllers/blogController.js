@@ -1,9 +1,40 @@
 const Blog = require("../models/blogModel");
+const multer = require("multer");
+const path = require("path");
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Directory where images will be saved
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique file name
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB file size limit
+  fileFilter: function (req, file, cb) {
+    const fileTypes = /jpeg|jpg|png/;
+    const extName = fileTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimeType = fileTypes.test(file.mimetype);
+
+    if (extName && mimeType) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only .jpg, .jpeg, .png formats allowed!"));
+    }
+  },
+});
 // Create a new blog
 exports.createBlog = async (req, res) => {
+  upload.single("image");
   try {
-    const newBlog = new Blog(req.body);
+    const { title, content } = req.body;
+    const image = req.file ? req.file.filename : null;
+    const newBlog = new Blog({ title, content, image });
     const blog = await newBlog.save();
     res.status(201).json(blog);
   } catch (error) {

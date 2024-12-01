@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 require("dotenv").config();
 
 const app = express();
+app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 // Enable CORS for all routes
 app.use(cors());
